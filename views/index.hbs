@@ -1,0 +1,18 @@
+<a href="/register">Salir</a>
+
+<table class="table table-success table-striped">
+  <thead>
+    <tr>
+      <th scope="col">Name</th>
+      <th scope="col">Email</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{#each usuarios}}
+      <tr>
+        <td>{{this.name}}</td>
+        <td>{{this.email}}</td>
+      </tr>
+    {{/each}}
+  </tbody>
+</table>
