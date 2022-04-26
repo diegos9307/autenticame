@@ -34,6 +34,7 @@ UsuarioSchema.methods.encryptPassword = async (password) => {
 UsuarioSchema.methods.matchPassword = async function (password) {
   return await bcrypt.compare(password, this.password);
 };
+
 /* UsuarioSchema.method({
   encryptPassword: async function (password) {
     const salt = await bcrypt.genSalt(10);
@@ -65,8 +66,7 @@ app.set("view engine", ".hbs");
 /*  Views  */
 
 app.get("/", async (req, res) => {
-  let usuarios = await Usuario.find().lean();
-  res.render("index", { usuarios });
+  res.redirect("login");
 });
 
 app.get("/register", (req, res) => {
@@ -78,23 +78,41 @@ app.get("/login", (req, res) => {
 });
 
 app.get("/logout", (req, res) => {
-  res.render("index");
+  res.redirect("login");
 });
 
-app.post("/login", (req, res) => {
-  const usuarioRegistrado = req.body;
-  console.log(usuarioRegistrado);
-  res.render("index");
+app.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+  const nuevaContraseña = password;
+  try {
+    const nuevoUsuario = await Usuario.findOne({ email });
+    if (nuevoUsuario) {
+      const response = await bcrypt.compare(
+        nuevaContraseña,
+        nuevoUsuario.password
+      );
+      if (response) {
+        let usuarios = await Usuario.find().lean();
+        res.render("index", { usuarios });
+      } else {
+        res.redirect("login");
+      }
+    } else {
+      res.redirect("login");
+    }
+  } catch (error) {
+    console.log(error);
+  }
 });
 
 app.post("/", async (req, res) => {
   const { name, email, password } = req.body;
-  // const salt = await bcrypt.genSalt(10);
-  // const hash = await bcrypt.hash(password, salt);
-  // const usuario = new Usuario({ name, email, password: hash });
-  const usuario = await new Usuario({ name, email, password });
-  console.log(usuario);
-  usuario.password = await usuario.encryptPassword(password);
+  const salt = await bcrypt.genSalt(10);
+  const hash = await bcrypt.hash(password, salt);
+  const usuario = new Usuario({ name, email, password: hash });
+  // const usuario = await new Usuario({ name, email, password });
+  // console.log(usuario);
+  // usuario.password = await usuario.encryptPassword(password);
   // console.log(usuario);
   // usuario.password = await Usuario.encryptPassword(password);
   await usuario.save();
